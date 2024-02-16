@@ -3,15 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApplication1.Models;
 
 namespace WebApplication1.Controllers
 {
-    [Route("api/Classes")]
-    [ApiController]
-    public class ClassesController : ControllerBase
+    public class ClassesController : BaseApiController
     {
         private readonly Context _context;
 
@@ -69,7 +68,7 @@ namespace WebApplication1.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok("Record updated succesfully..");
         }
 
         [Route("Insert")]
@@ -105,7 +104,7 @@ namespace WebApplication1.Controllers
             _context.Remove(@class);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(@class);
         }
 
         [Route("Deleteall")]
