@@ -10,8 +10,8 @@ namespace WebApplication1.Models
         [Required]
         public string? Name { get; set; }
 
-        [Required]
-        public string? Password { get; set; }
+        public byte[] PasswordHash {  get; set; }
+        public byte[] PasswordSalt { get; set; }
 
     }
 
