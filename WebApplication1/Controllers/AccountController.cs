@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
+using WebApplication1.Data;
 using WebApplication1.DTOs;
 using WebApplication1.Models;
 
@@ -9,15 +10,15 @@ namespace WebApplication1.Controllers
 {
     public class AccountController : BaseApiController
     {
-        private readonly Context _context;
+        private readonly DataContext _context;
 
-        public AccountController(Context context)
+        public AccountController(DataContext context)
         {
             _context = context;
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult<Class>> Register(Registerdto registerdto)
+        public async Task<ActionResult<AppUsers>> Register(Registerdto registerdto)
         {
             if (await UserExist(registerdto.UserName))
             {
@@ -26,22 +27,22 @@ namespace WebApplication1.Controllers
   
             using var hmac = new HMACSHA512();
 
-            var user = new Class
+            var user = new AppUsers
             {
                 Name = registerdto.UserName.ToLower(),
                 PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(registerdto.Password)),
                 PasswordSalt = hmac.Key
             };
 
-            _context.Class.Add(user);
+            _context.Users.Add(user);
             await _context.SaveChangesAsync();
             return Ok(user);
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<Class>> Login(Logindto loginDTO)
+        public async Task<ActionResult<AppUsers>> Login(Logindto loginDTO)
         {
-            var user = await _context.Class.SingleOrDefaultAsync(x => x.Name == loginDTO.username);
+            var user = await _context.Users.SingleOrDefaultAsync(x => x.Name == loginDTO.username);
 
             if (user == null)
             {
@@ -61,7 +62,7 @@ namespace WebApplication1.Controllers
 
         private async Task<bool> UserExist(string username)
         {
-            return await _context.Class.AnyAsync(x => x.Name == username.ToLower());
+            return await _context.Users.AnyAsync(x => x.Name == username.ToLower());
         }
     }
 }
