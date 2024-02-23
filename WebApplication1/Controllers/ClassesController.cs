@@ -6,31 +6,32 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using WebApplication1.Data;
 using WebApplication1.Models;
 
 namespace WebApplication1.Controllers
 {
     public class ClassesController : BaseApiController
     {
-        private readonly Context _context;
+        private readonly DataContext _context;
 
-        public ClassesController(Context context)
+        public ClassesController(DataContext context)
         {
             _context = context;
         }
 
         [Route("getall")]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Class>>> GetClass()
+        public async Task<ActionResult<IEnumerable<AppUsers>>> GetClass()
         {
-            return await _context.Class.ToListAsync();
+            return await _context.Users.ToListAsync();
         }
 
         [Route("getbyid/{id}")]
         [HttpGet]
-        public async Task<ActionResult<Class>> GetClass(long id)
+        public async Task<ActionResult<AppUsers>> GetClass(long id)
         {
-            var @class = await _context.Class.FindAsync(id);
+            var @class = await _context.Users.FindAsync(id);
 
             if (@class == null)
             {
@@ -43,7 +44,7 @@ namespace WebApplication1.Controllers
 
         [Route("Update/{id}")]
         [HttpPut]
-        public async Task<IActionResult> PutClass(long id, Class @class)
+        public async Task<IActionResult> PutClass(long id, AppUsers @class)
         {
             if (id != @class.Id)
             {
@@ -73,9 +74,9 @@ namespace WebApplication1.Controllers
 
         [Route("Insert")]
         [HttpPost]
-        public async Task<ActionResult<Class>> PostClass(Class @class)
+        public async Task<ActionResult<AppUsers>> PostClass(AppUsers @class)
         {
-            _context.Class.Add(@class);
+            _context.Users.Add(@class);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetClass", new { id = @class.Id }, @class);
@@ -83,9 +84,9 @@ namespace WebApplication1.Controllers
 
         [Route("BulkInsert")]
         [HttpPost]
-        public async Task<ActionResult<List<Class>>> BulkInsert(List<Class> classes)
+        public async Task<ActionResult<List<AppUsers>>> BulkInsert(List<AppUsers> classes)
         {
-            _context.Class.AddRange(classes);
+            _context.Users.AddRange(classes);
             await _context.SaveChangesAsync();
 
             return Ok(classes);
@@ -95,7 +96,7 @@ namespace WebApplication1.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeleteClass(long id)
         {
-            var @class = await _context.Class.FindAsync(id);
+            var @class = await _context.Users.FindAsync(id);
             if (@class == null)
             {
                 return NotFound();
@@ -113,7 +114,7 @@ namespace WebApplication1.Controllers
         {
             try
             {
-                _context.Class.RemoveRange(_context.Class);
+                _context.Users.RemoveRange(_context.Users);
                 await _context.SaveChangesAsync();
 
                 return Ok("All records deleted successfully");
@@ -128,7 +129,7 @@ namespace WebApplication1.Controllers
 
         private bool ClassExists(long id)
         {
-            return _context.Class.Any(e => e.Id == id);
+            return _context.Users.Any(e => e.Id == id);
         }
     }
 }
