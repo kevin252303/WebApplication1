@@ -2,43 +2,48 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApplication1.Data;
+using WebApplication1.DTOs;
+using WebApplication1.Interfaces;
 using WebApplication1.Models;
 
 namespace WebApplication1.Controllers
 {
-    public class ClassesController : BaseApiController
+    
+    public class UserController : BaseApiController
     {
+        private readonly IUserRepository _userRepository;
         private readonly DataContext _context;
+        private readonly IMapper _mapper;
 
-        public ClassesController(DataContext context)
+        public UserController(IUserRepository userRepository, DataContext context, IMapper mapper)
         {
+            _userRepository = userRepository;
             _context = context;
+            _mapper = mapper;
         }
 
-        [Route("getall")]
+        
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AppUsers>>> GetClass()
+        public async Task<ActionResult<IEnumerable<AppUsers>>> GetUsers()
         {
-            return await _context.Users.ToListAsync();
+            var user = await _userRepository.getUsersAsyns();
+            var usertoreturn = _mapper.Map<IEnumerable<MemberDTO>>(user);
+            return Ok(usertoreturn);
         }
 
-        [Route("getbyid/{id}")]
-        [HttpGet]
-        public async Task<ActionResult<AppUsers>> GetClass(long id)
+        
+        [HttpGet("{username}")]
+        public async Task<ActionResult<MemberDTO>> GetUser(string username)
         {
-            var @class = await _context.Users.FindAsync(id);
-
-            if (@class == null)
-            {
-                return NotFound();
-            }
-
-            return @class;
+            var user = await _userRepository.GetUserByNameAsync(username);
+            return _mapper.Map<MemberDTO>(user);
         }
 
 

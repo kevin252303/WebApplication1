@@ -10,6 +10,7 @@ namespace WebApplication1.Models
 
         [Required]
         public string? Name { get; set; }
+        public string password { get; set; }
 
         public byte[] PasswordHash {  get; set; }
         public byte[] PasswordSalt { get; set; }
@@ -27,7 +28,8 @@ namespace WebApplication1.Models
 
         public int GetAge()
         {
-            return DateOfBirth.CalculateAge();
+            //return DateOfBirth.CalculateAge();
+            return 0;
         }
 
 

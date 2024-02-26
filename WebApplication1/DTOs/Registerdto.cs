@@ -10,5 +10,8 @@ namespace WebApplication1.DTOs
         [Required]
         [StringLength(15,MinimumLength =4)]
         public string Password { get; set; }
+
+        public DateTime created {  get; set; }
+        public DateTime lastActive { get; set; }
     }
 }

@@ -18,7 +18,7 @@ namespace WebApplication1.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult<AppUsers>> Register(Registerdto registerdto)
+        public async Task<ActionResult<MemberDTO>> Register(Registerdto registerdto)
         {
             if (await UserExist(registerdto.UserName))
             {
@@ -30,6 +30,7 @@ namespace WebApplication1.Controllers
             var user = new AppUsers
             {
                 Name = registerdto.UserName.ToLower(),
+                password = registerdto.Password,
                 PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(registerdto.Password)),
                 PasswordSalt = hmac.Key
             };
@@ -40,7 +41,7 @@ namespace WebApplication1.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<AppUsers>> Login(Logindto loginDTO)
+        public async Task<ActionResult<MemberDTO>> Login(Logindto loginDTO)
         {
             var user = await _context.Users.SingleOrDefaultAsync(x => x.Name == loginDTO.username);
 
@@ -49,15 +50,15 @@ namespace WebApplication1.Controllers
                 return Unauthorized("invalid username");
             }
 
-            using var hmac = new HMACSHA512(user.PasswordSalt);
+            //using var hmac = new HMACSHA512(user.PasswordSalt);
 
-            var computehas = hmac.ComputeHash(Encoding.UTF8.GetBytes(loginDTO.password));
+            //var computehas = hmac.ComputeHash(Encoding.UTF8.GetBytes(loginDTO.password));
 
-            for(int i = 0; i < computehas.Length; i++)
+            for(int i = 0; i < loginDTO.password.Length; i++)
             {
-                if (computehas[i] != user.PasswordHash[i]) return Unauthorized("Invalid password"); 
+                if (loginDTO.password[i] != user.password[i]) return Unauthorized("Invalid password"); 
             }
-            return user;
+            return Ok(user);
         }
 
         private async Task<bool> UserExist(string username)
