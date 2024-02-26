@@ -9,5 +9,7 @@ namespace WebApplication1.Models
         public string Url { get; set; }
         public bool IsMain { get; set; }
         public string PublicId { get; set; }
+        public int AppUserId { get; set; }
+        public AppUsers User { get; set; }
     }
 }
