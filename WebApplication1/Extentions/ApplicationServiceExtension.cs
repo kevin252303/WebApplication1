@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using WebApplication1.Data;
+using WebApplication1.Helpers;
 using WebApplication1.Interfaces;
 
 namespace WebApplication1.Extentions
@@ -15,6 +16,8 @@ namespace WebApplication1.Extentions
             services.AddCors();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+            services.Configure<CloudinarySettings>(config.GetSection("CloudinarySettings"));
+            services.AddScoped<IPhotoService , IPhotoService>();
             return services;
         }
     }
