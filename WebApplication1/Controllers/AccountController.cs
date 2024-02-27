@@ -43,20 +43,20 @@ namespace WebApplication1.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<MemberDTO>> Login(Logindto loginDTO)
         {
-            var user = await _context.Users.SingleOrDefaultAsync(x => x.Name == loginDTO.username);
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Name == loginDTO.username);
 
             if (user == null)
             {
                 return Unauthorized("invalid username");
             }
 
-            //using var hmac = new HMACSHA512(user.PasswordSalt);
+            using var hmac = new HMACSHA512(user.PasswordSalt);
 
-            //var computehas = hmac.ComputeHash(Encoding.UTF8.GetBytes(loginDTO.password));
+            var computehas = hmac.ComputeHash(Encoding.UTF8.GetBytes(loginDTO.password));
 
-            for(int i = 0; i < loginDTO.password.Length; i++)
+            for (int i = 0; i < computehas.Length; i++)
             {
-                if (loginDTO.password[i] != user.password[i]) return Unauthorized("Invalid password"); 
+                if (computehas[i] != user.PasswordHash[i]) return Unauthorized("Invalid password"); 
             }
             return Ok(user);
         }

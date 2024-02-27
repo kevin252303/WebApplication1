@@ -1,37 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using WebApplication1.Data;
 using WebApplication1.DTOs;
+using WebApplication1.Extentions;
 using WebApplication1.Interfaces;
 using WebApplication1.Models;
 
 namespace WebApplication1.Controllers
 {
-    
+
     public class UserController : BaseApiController
     {
         private readonly IUserRepository _userRepository;
         private readonly DataContext _context;
         private readonly IMapper _mapper;
+        private readonly IPhotoService _photoService;
 
-        public UserController(IUserRepository userRepository, DataContext context, IMapper mapper)
+        public IPhotoService PhotoService { get; }
+
+        public UserController(IUserRepository userRepository, DataContext context, IMapper mapper,
+            IPhotoService photoService)
         {
             _userRepository = userRepository;
             _context = context;
             _mapper = mapper;
+            _photoService = photoService;
         }
 
         
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AppUsers>>> GetUsers()
+        public async Task<ActionResult<IEnumerable<MemberDTO>>> GetUsers()
         {
             var user = await _userRepository.getUsersAsyns();
             var usertoreturn = _mapper.Map<IEnumerable<MemberDTO>>(user);
@@ -47,94 +45,73 @@ namespace WebApplication1.Controllers
         }
 
 
-        [Route("Update/{id}")]
         [HttpPut]
-        public async Task<IActionResult> PutClass(long id, AppUsers @class)
+        public async Task<ActionResult> UpdateUser(MemberUpdateDTO memberUpdateDto)
         {
-            if (id != @class.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(@class).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ClassExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return Ok("Record updated succesfully..");
-        }
-
-        [Route("Insert")]
-        [HttpPost]
-        public async Task<ActionResult<AppUsers>> PostClass(AppUsers @class)
-        {
-            _context.Users.Add(@class);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetClass", new { id = @class.Id }, @class);
-        }
-
-        [Route("BulkInsert")]
-        [HttpPost]
-        public async Task<ActionResult<List<AppUsers>>> BulkInsert(List<AppUsers> classes)
-        {
-            _context.Users.AddRange(classes);
-            await _context.SaveChangesAsync();
-
-            return Ok(classes);
-        }
-
-        [Route("Delete/{id}")]
-        [HttpDelete]
-        public async Task<IActionResult> DeleteClass(long id)
-        {
-            var @class = await _context.Users.FindAsync(id);
-            if (@class == null)
-            {
-                return NotFound();
-            }
-
-            _context.Remove(@class);
-            await _context.SaveChangesAsync();
-
-            return Ok(@class);
-        }
-
-        [Route("Deleteall")]
-        [HttpDelete]
-        public async Task<IActionResult> DeleteAll()
-        {
-            try
-            {
-                _context.Users.RemoveRange(_context.Users);
-                await _context.SaveChangesAsync();
-
-                return Ok("All records deleted successfully");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-
+            var user = await _userRepository.GetUserByNameAsync(User.GetUserName());
             
+            if (user == null) return NotFound();
+
+            _mapper.Map(memberUpdateDto, user);
+
+            if(await _userRepository.saveAllAsyns()) return NoContent();
+
+            return BadRequest("Failed to update user");
         }
 
-        private bool ClassExists(long id)
+        [HttpPost("add-photo")]
+        public async Task<ActionResult<PhotoDTO>> AddPhoto(IFormFile file)
         {
-            return _context.Users.Any(e => e.Id == id);
+            var user = await _userRepository.GetUserByNameAsync(User.GetUserName());
+
+            if (user == null) return NotFound();
+
+            var result = await _photoService.AddPhotoAsync(file);
+
+            if(result.Error != null) return BadRequest(result.Error.Message);
+
+            var photo = new Photo
+            {
+                Url = result.SecureUrl.AbsoluteUri,
+                PublicId = result.PublicId
+            };
+
+            if(user.Photos.Count == 0) photo.IsMain = true;
+
+            user.Photos.Add(photo);
+
+            if(await _userRepository.saveAllAsyns())
+            {
+                return CreatedAtAction(nameof(GetUser), new {username = user.Name},_mapper.Map<PhotoDTO>(photo));
+            }
+
+            return BadRequest("Problem adding photo");
+        }
+
+        [HttpPut("set-main-photo/{photoId}")]
+        public async Task<ActionResult>SetMainPhoto(int photoid)
+        {
+            var user = await _userRepository.GetUserByNameAsync(User.GetUserName());
+
+            if (user == null) return NotFound();
+
+            var photo = user.Photos.FirstOrDefault(x=>x.Id == photoid);
+
+            if (photo == null) return NotFound();
+
+            if (photo.IsMain) return BadRequest("this is already a main photo");
+
+            var currentMain = user.Photos.FirstOrDefault(x => x.IsMain);
+
+            if(currentMain == null)
+            {
+                currentMain.IsMain = false;
+                photo.IsMain = true;
+            }
+
+            if (await _userRepository.saveAllAsyns()) return NoContent();
+
+            return BadRequest("Problem setting main photo");
         }
     }
 }

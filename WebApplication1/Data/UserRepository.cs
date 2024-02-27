@@ -20,7 +20,9 @@ namespace WebApplication1.Data
 
         public async Task<AppUsers> GetUserByNameAsync(string username)
         {
-            return await _context.Users.SingleOrDefaultAsync(x => x.Name == username);
+            return await _context.Users
+                .Include(p => p.Photos)
+                .SingleOrDefaultAsync(x => x.Name == username);
         }
 
         public async Task<IEnumerable<AppUsers>> getUsersAsyns()
