@@ -10,6 +10,7 @@ namespace WebApplication1.Models
         public bool IsMain { get; set; }
         public string PublicId { get; set; }
         public int AppUserId { get; set; }
+        [ForeignKey("AppUserId")]
         public AppUsers User { get; set; }
     }
 }

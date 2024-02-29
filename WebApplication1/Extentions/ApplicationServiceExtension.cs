@@ -2,6 +2,7 @@
 using WebApplication1.Data;
 using WebApplication1.Helpers;
 using WebApplication1.Interfaces;
+using WebApplication1.Services;
 
 namespace WebApplication1.Extentions
 {
@@ -15,9 +16,12 @@ namespace WebApplication1.Extentions
             });
             services.AddCors();
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IPhotoService, PhotoService>();
+            services.AddScoped<ITokenServise, TokenService>();
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
             services.Configure<CloudinarySettings>(config.GetSection("CloudinarySettings"));
-            services.AddScoped<IPhotoService , IPhotoService>();
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
             return services;
         }
     }
