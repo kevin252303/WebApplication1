@@ -1,14 +1,16 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebApplication1.Data;
 using WebApplication1.DTOs;
 using WebApplication1.Extentions;
+using WebApplication1.Helpers;
 using WebApplication1.Interfaces;
 using WebApplication1.Models;
 
 namespace WebApplication1.Controllers
 {
-
+    [Authorize]
     public class UserController : BaseApiController
     {
         private readonly IUserRepository _userRepository;
@@ -18,25 +20,23 @@ namespace WebApplication1.Controllers
 
         public IPhotoService PhotoService { get; }
 
-        public UserController(IUserRepository userRepository, DataContext context, IMapper mapper,
+        public UserController(IUserRepository userRepository, IMapper mapper,
             IPhotoService photoService)
         {
             _userRepository = userRepository;
-            _context = context;
             _mapper = mapper;
             _photoService = photoService;
         }
-
-        
+        [AllowAnonymous]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<MemberDTO>>> GetUsers()
+        public async Task<ActionResult<PagedList<MemberDTO>>> GetUsers([FromQuery]UserParams userParams)
         {
-            var user = await _userRepository.getUsersAsyns();
-            var usertoreturn = _mapper.Map<IEnumerable<MemberDTO>>(user);
-            return Ok(usertoreturn);
+            var user = await _userRepository.GetMembersAsync(userParams);
+            Response.AppPaginationHeader(new PaginationHeader(user.CurrentPage, user.PageSize, user.TotalCount,user.TotalPages));
+            return Ok(user);
         }
 
-        
+        [AllowAnonymous]
         [HttpGet("{username}")]
         public async Task<ActionResult<MemberDTO>> GetUser(string username)
         {
@@ -82,7 +82,7 @@ namespace WebApplication1.Controllers
 
             if(await _userRepository.saveAllAsyns())
             {
-                return CreatedAtAction(nameof(GetUser), new {username = user.Name},_mapper.Map<PhotoDTO>(photo));
+                return CreatedAtAction(nameof(GetUser), new {username = user.UserName},_mapper.Map<PhotoDTO>(photo));
             }
 
             return BadRequest("Problem adding photo");

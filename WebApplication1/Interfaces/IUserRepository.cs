@@ -1,4 +1,6 @@
-﻿using WebApplication1.Models;
+﻿using WebApplication1.DTOs;
+using WebApplication1.Helpers;
+using WebApplication1.Models;
 
 namespace WebApplication1.Interfaces
 {
@@ -9,6 +11,8 @@ namespace WebApplication1.Interfaces
         Task<IEnumerable<AppUsers>> getUsersAsyns ();
         Task<AppUsers> GetUserByIdAsync(int id);
         Task<AppUsers> GetUserByNameAsync(string username);
+        Task<PagedList<MemberDTO>> GetMembersAsync(UserParams userParams);
+        Task<MemberDTO> GetMemberAsync(string username);
 
     }
 }
