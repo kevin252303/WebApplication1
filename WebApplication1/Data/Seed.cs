@@ -2,6 +2,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using WebApplication1.DTOs;
 using WebApplication1.Models;
 
 namespace WebApplication1.Data
@@ -21,10 +22,8 @@ namespace WebApplication1.Data
             foreach (var user in users)
             {
                 using var hmac = new HMACSHA512();
-
-                user.UserName = user.UserName.ToLower();
                 user.password = ("P@ssw0rd");
-                user.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes("P@ssw0rd"));
+                user.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(user.password));
                 user.PasswordSalt = hmac.Key;
 
                 context.Users.Add(user);

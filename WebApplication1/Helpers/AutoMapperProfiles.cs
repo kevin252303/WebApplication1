@@ -16,6 +16,9 @@ namespace WebApplication1.Helpers
             CreateMap<Photo,PhotoDTO>();
             CreateMap<MemberUpdateDTO,AppUsers>();
             CreateMap<Registerdto,AppUsers>();
+            CreateMap<Message,MessageDTO>()
+                .ForMember(d=>d.senderPhotoUrl,o=>o.MapFrom(s=>s.Sender.Photos.FirstOrDefault(x=>x.IsMain).Url))
+                .ForMember(d => d.recipientPhotoUrl, o => o.MapFrom(r => r.Recipient.Photos.FirstOrDefault(x => x.IsMain).Url));
         }
     }
 }

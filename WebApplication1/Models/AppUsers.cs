@@ -1,10 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using WebApplication1.Extentions;
 
 namespace WebApplication1.Models
 {
-    public class AppUsers
+    public class AppUsers : IdentityUser<int>
     {
         [Key]
         [Column("Id")]
@@ -17,8 +18,7 @@ namespace WebApplication1.Models
         public byte[] PasswordHash {  get; set; }
         public byte[] PasswordSalt { get; set; }
 
-        [NotMapped]
-        public DateOnly DateOfBirth { get; set; }
+        public DateTime DateOfBirth { get; set; }
         public string KnownAs { get; set; }
         public DateTime Created { get; set; } = DateTime.UtcNow;
         public DateTime LastActive { get; set; } = DateTime.UtcNow;
@@ -29,12 +29,10 @@ namespace WebApplication1.Models
         public string City { get; set; }
         public string Country { get; set; }
         public List<Photo> Photos { get; set; } = new ();
-
-        public int GetAge()
-        {
-            return DateOfBirth.CalculateAge();
-            //return 0;
-        }
+        public List<UserLike> LikedByUser { get; set; }
+        public List<UserLike> LikedUsers {  get; set; }
+        public List<Message> MessageSent {  get; set; }
+        public List<Message> MessageReceived { get; set; }
 
 
 

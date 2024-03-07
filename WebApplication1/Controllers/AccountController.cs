@@ -34,15 +34,14 @@ namespace WebApplication1.Controllers
             }
 
             var user = _mapper.Map<AppUsers>(registerdto);
-  
+
             using var hmac = new HMACSHA512();
 
 
             user.UserName = registerdto.UserName.ToLower();
-            user.password = registerdto.Password;
+            user.password = registerdto.Password;              
             user.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(registerdto.Password));
             user.PasswordSalt = hmac.Key;
-                
            
 
             _context.Users.Add(user);
@@ -51,14 +50,17 @@ namespace WebApplication1.Controllers
             {
                 Username = user.UserName,
                 KnownAs = user.KnownAs,
-                Token = _tokenServise.CreateToken(user)
+                Token = _tokenServise.CreateToken(user),
+                Gender = user.Gender
             };
         }
 
         [HttpPost("login")]
         public async Task<ActionResult<UserDTO>> Login(Logindto loginDTO)
         {
-            var user = await _context.Users.SingleOrDefaultAsync(x => x.UserName == loginDTO.username);
+            var user = await _context.Users
+                .Include(p=>p.Photos)
+                .SingleOrDefaultAsync(x => x.UserName == loginDTO.userName);
 
             if (user == null)
             {
@@ -76,9 +78,10 @@ namespace WebApplication1.Controllers
             return new UserDTO
             {
                 Username = user.UserName,
-                PhotoUrl = user.Photos.FirstOrDefault(x=>x.IsMain)?.Url,
+                PhotoUrl = user.Photos.FirstOrDefault(x=>x.IsMain).Url,
                 KnownAs = user.KnownAs,
-                Token = _tokenServise.CreateToken(user)
+                Token = _tokenServise.CreateToken(user),
+                Gender = user.Gender
             };
         }
 

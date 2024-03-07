@@ -2,7 +2,6 @@
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 using NuGet.Protocol;
-using SQLitePCL;
 using WebApplication1.DTOs;
 using WebApplication1.Helpers;
 using WebApplication1.Interfaces;
@@ -24,17 +23,32 @@ namespace WebApplication1.Data
         public async Task<MemberDTO> GetMemberAsync(string username)
         {
             return await _context.Users
-                .Where(x=>x.UserName == username)
+                .Where(x => x.UserName == username)
                 .ProjectTo<MemberDTO>(_mapper.ConfigurationProvider)
                 .SingleOrDefaultAsync();
         }
 
         public async Task<PagedList<MemberDTO>> GetMembersAsync(UserParams userParams)
         {
-            var query = _context.Users
-                .ProjectTo<MemberDTO>(_mapper.ConfigurationProvider)
-                .AsNoTracking();
-            return await PagedList<MemberDTO>.CreateAsync(query,userParams.PageNumber,userParams.PageSize);
+            var query = _context.Users.AsQueryable();
+            query = query.Where(u => u.UserName != userParams.CurrentUserName);
+            query = query.Where(u => u.Gender == userParams.Gender);
+
+            var minDob = DateTime.Today.AddYears(-userParams.MaxAge - 1);
+            var maxDob = DateTime.Today.AddYears(-userParams.MinAge);
+
+            query = query.Where(u => u.DateOfBirth >= minDob && u.DateOfBirth <= maxDob);
+
+            query = userParams.OrderBy switch
+            {
+                "created" => query.OrderByDescending(u => u.Created),
+                _ => query.OrderByDescending(u => u.LastActive)
+            };
+
+            return await PagedList<MemberDTO>.CreateAsync(
+                query.AsNoTracking().ProjectTo<MemberDTO>(_mapper.ConfigurationProvider),
+                userParams.PageNumber,
+                userParams.PageSize);
         }
 
         public async Task<AppUsers> GetUserByIdAsync(int id)
@@ -49,14 +63,14 @@ namespace WebApplication1.Data
                 .SingleOrDefaultAsync(x => x.UserName == username);
         }
 
-        public  async Task<IEnumerable<AppUsers>> getUsersAsyns()
+        public async Task<IEnumerable<AppUsers>> getUsersAsyns()
         {
             return await _context.Users.ToListAsync();
         }
 
         public async Task<bool> saveAllAsyns()
         {
-            return await _context.SaveChangesAsync()>0;
+            return await _context.SaveChangesAsync() > 0;
         }
 
         public void Update(AppUsers User)
