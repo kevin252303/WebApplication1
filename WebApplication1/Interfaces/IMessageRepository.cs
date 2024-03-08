@@ -16,5 +16,6 @@ namespace WebApplication1.Interfaces
         void RemoveConnection(Connection connection);
         Task<Connection> GetConnectionAsync(string connectionId);
         Task<Group> GetMessageGroup(string groupName);
+        Task<Group> GetGroupForConnection(string  connectionId);
     }
 }

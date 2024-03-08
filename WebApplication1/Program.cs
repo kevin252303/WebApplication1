@@ -59,6 +59,7 @@ var context = services.GetRequiredService<DataContext>();
 try
 {
     await context.Database.MigrateAsync();
+    await context.Database.ExecuteSqlRawAsync("truncate table [connections]");
     await Seed.SeedUsers(context);
     var result = context.Users.FirstOrDefault();
 }
