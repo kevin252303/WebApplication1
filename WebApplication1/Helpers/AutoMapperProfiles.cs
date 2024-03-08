@@ -19,6 +19,8 @@ namespace WebApplication1.Helpers
             CreateMap<Message,MessageDTO>()
                 .ForMember(d=>d.senderPhotoUrl,o=>o.MapFrom(s=>s.Sender.Photos.FirstOrDefault(x=>x.IsMain).Url))
                 .ForMember(d => d.recipientPhotoUrl, o => o.MapFrom(r => r.Recipient.Photos.FirstOrDefault(x => x.IsMain).Url));
+            CreateMap<DateTime,DateTime>().ConvertUsing(d=>DateTime.SpecifyKind(d,DateTimeKind.Utc));
+            CreateMap<DateTime?, DateTime?>().ConvertUsing(d=>d.HasValue ? DateTime.SpecifyKind(d.Value,DateTimeKind.Utc) : null);
         }
     }
 }
