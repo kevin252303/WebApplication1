@@ -9,14 +9,14 @@ using WebApplication1.Models;
 namespace WebApplication1.SignalR
 {
     [Authorize]
-    public class MessageHub:Hub
+    public class MessageHub : Hub
     {
         private readonly IMessageRepository _messageRepository;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
         private readonly IHubContext<PresenceHub> _presenceHub;
 
-        public MessageHub(IMessageRepository messageRepository, IUserRepository userRepository,IMapper mapper,
+        public MessageHub(IMessageRepository messageRepository, IUserRepository userRepository, IMapper mapper,
             IHubContext<PresenceHub> presenceHub)
         {
             _messageRepository = messageRepository;
@@ -29,7 +29,7 @@ namespace WebApplication1.SignalR
         {
             var httpcontext = Context.GetHttpContext();
             var otherUser = httpcontext.Request.Query["user"];
-            var groupName=GetGroupName(Context.User.GetUserName(), otherUser);
+            var groupName = GetGroupName(Context.User.GetUserName(), otherUser);
             await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
             var group = await AddToGroup(groupName);
 
@@ -45,6 +45,29 @@ namespace WebApplication1.SignalR
             var group = await RemoveFromMessageGroup();
             await Clients.Group(group.Name).SendAsync("UpdatedGroup");
             await base.OnDisconnectedAsync(exception);
+        }
+
+        public async Task Typing(bool typing, CreateMessageDTO createMessageDTO)
+        {
+            var senderUsername = Context.User.GetUserName();
+            var sender = await _userRepository.GetUserByNameAsync(senderUsername);
+            var recipient = await _userRepository.GetUserByNameAsync(createMessageDTO.RecipientUserName);
+            var groupname= GetGroupName(sender.UserName, recipient.UserName);
+            var group= await _messageRepository.GetMessageGroup(groupname);
+            var connections = group.Connections;
+
+            if(group.Connections.Any(x=>x.Username == recipient.UserName))
+            {
+                if (typing)
+                {
+                    await Clients.OthersInGroup(groupname).SendAsync("ReceiveTypingStatus", typing);
+                }
+                else
+                {
+                    await Clients.OthersInGroup(groupname).SendAsync("ReceiveTypingStatus", typing);
+                }
+            }
+            
         }
 
         public async Task SendMessage(CreateMessageDTO createMessageDTO)
@@ -68,10 +91,10 @@ namespace WebApplication1.SignalR
             };
 
             var groupname = GetGroupName(sender.UserName, recipient.UserName);
-            
+
             var group = await _messageRepository.GetMessageGroup(groupname);
 
-            if(group.Connections.Any(x=>x.Username == recipient.UserName))
+            if (group.Connections.Any(x => x.Username == recipient.UserName))
             {
                 message.DateRead = DateTime.UtcNow;
             }
@@ -91,12 +114,12 @@ namespace WebApplication1.SignalR
             {
                 await Clients.Group(groupname).SendAsync("NewMessage", _mapper.Map<MessageDTO>(message));
             }
-            
+
         }
 
-        private string GetGroupName (string caller,string other)
+        private string GetGroupName(string caller, string other)
         {
-            var stringCompare=string.CompareOrdinal(caller,other)<0;
+            var stringCompare = string.CompareOrdinal(caller, other) < 0;
             return stringCompare ? $"{caller}-{other}" : $"{other}-{caller}";
 
         }
@@ -104,9 +127,9 @@ namespace WebApplication1.SignalR
         private async Task<Group> AddToGroup(string groupname)
         {
             var group = await _messageRepository.GetMessageGroup(groupname);
-            var connection = new Connection(Context.ConnectionId,Context.User.GetUserName());
+            var connection = new Connection(Context.ConnectionId, Context.User.GetUserName());
 
-            if(group == null)
+            if (group == null)
             {
                 group = new Group(groupname);
                 _messageRepository.AddGroup(group);
@@ -114,7 +137,7 @@ namespace WebApplication1.SignalR
 
             group.Connections.Add(connection);
 
-            if(await _messageRepository.SaveAllAsync()) return group;
+            if (await _messageRepository.SaveAllAsync()) return group;
 
             throw new HubException("Failed to add to group");
         }
@@ -122,10 +145,10 @@ namespace WebApplication1.SignalR
         private async Task<Group> RemoveFromMessageGroup()
         {
             var group = await _messageRepository.GetGroupForConnection(Context.ConnectionId);
-            var connection = group.Connections.FirstOrDefault(x=>x.ConnectionId==Context.ConnectionId);
+            var connection = group.Connections.FirstOrDefault(x => x.ConnectionId == Context.ConnectionId);
             _messageRepository.RemoveConnection(connection);
 
-            if(await _messageRepository.SaveAllAsync()) return group;
+            if (await _messageRepository.SaveAllAsync()) return group;
 
             throw new HubException("Failed to remove form group");
         }
