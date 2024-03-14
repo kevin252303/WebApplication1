@@ -54,10 +54,15 @@
             List<string> connectionIds;
             lock (OnlineUsers)
             {
-                connectionIds = OnlineUsers.GetValueOrDefault(username);
+                if (OnlineUsers.TryGetValue(username, out connectionIds))
+                {
+                    return Task.FromResult(connectionIds);
+                }
+                else
+                {
+                    return Task.FromResult(new List<string>());
+                }
             }
-
-            return Task.FromResult(connectionIds);
         }
     }
 }
