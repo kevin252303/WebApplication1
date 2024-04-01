@@ -37,7 +37,7 @@ namespace WebApplication1.Controllers
 
             using var hmac = new HMACSHA512();
 
-
+            
             user.UserName = registerdto.UserName.ToLower();
             user.password = registerdto.Password;              
             user.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(registerdto.Password));

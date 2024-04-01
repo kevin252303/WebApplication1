@@ -33,6 +33,8 @@ namespace WebApplication1.Models
         public List<UserLike> LikedUsers {  get; set; }
         public List<Message> MessageSent {  get; set; }
         public List<Message> MessageReceived { get; set; }
+        public string? instaUrl { get; set; }
+        public string? twitterUrl { get; set; }
 
 
 
