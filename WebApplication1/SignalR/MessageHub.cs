@@ -152,5 +152,62 @@ namespace WebApplication1.SignalR
 
             throw new HubException("Failed to remove form group");
         }
+
+        public async Task CallUser(string recipientUsername)
+        {
+            var senderUsername = Context.User.GetUserName();
+            var sender = await _userRepository.GetUserByNameAsync(senderUsername);
+            var recipient = await _userRepository.GetUserByNameAsync(recipientUsername);
+            var groupname = GetGroupName(sender.UserName, recipient.UserName);
+            var group = await _messageRepository.GetMessageGroup(groupname);
+            var connections = group.Connections;
+
+            if (group.Connections.Any(x => x.Username == recipient.UserName))
+            {
+                await Clients.OthersInGroup(groupname).SendAsync("IncomingCall", senderUsername);
+            }
+            
+        }
+
+        public async Task AnswerCall(string callerUsername)
+        {
+            var recipientUsername = Context.User.GetUserName();
+            var groupname = GetGroupName(callerUsername, recipientUsername);
+            var group = await _messageRepository.GetMessageGroup(groupname);
+            var connections = group.Connections;
+
+            if (connections != null)
+            {
+                await Clients.OthersInGroup(groupname).SendAsync("CallAccepted", callerUsername);
+            }
+        }
+
+        public async Task RejectCall(string callerUsername)
+        {
+            var recipientUsername = Context.User.GetUserName();
+            var groupname = GetGroupName(callerUsername, recipientUsername);
+            var group = await _messageRepository.GetMessageGroup(groupname);
+            var connections = group.Connections;
+
+            if (connections != null)
+            {
+                await Clients.OthersInGroup(groupname).SendAsync("CallRejected");
+            }
+        }
+
+        public async Task EndCall(string otherUsername)
+        {
+            var callerUsername = Context.User.GetUserName();
+            var recipientUsername = Context.User.GetUserName();
+            var groupname = GetGroupName(callerUsername, recipientUsername);
+            var group = await _messageRepository.GetMessageGroup(groupname);
+            var connections = group.Connections;
+            var otherConnection = await PresenceTracker.GetConnectionForUsers(otherUsername);
+
+            if (connections != null)
+            {
+                await Clients.All.SendAsync("CallEnded");
+            }
+        }
     }
 }

@@ -20,5 +20,7 @@ namespace WebApplication1.DTOs
         public string Country { get; set; }
         public List<PhotoDTO> Photos { get; set; }
         public string PhotoUrl { get; set; }
+        public string instaUrl { get; set; }
+        public string twitterUrl { get; set;}
     }
 }
