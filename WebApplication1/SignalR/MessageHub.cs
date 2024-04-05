@@ -166,7 +166,12 @@ namespace WebApplication1.SignalR
             {
                 await Clients.OthersInGroup(groupname).SendAsync("IncomingCall", senderUsername);
             }
-            
+
+            else
+            {
+                await Clients.Caller.SendAsync("UserOffline", "Please try again when user is online");
+            }
+
         }
 
         public async Task AnswerCall(string callerUsername)
@@ -178,7 +183,7 @@ namespace WebApplication1.SignalR
 
             if (connections != null)
             {
-                await Clients.OthersInGroup(groupname).SendAsync("CallAccepted", callerUsername);
+                await Clients.All.SendAsync("CallAccepted", callerUsername);
             }
         }
 
@@ -199,7 +204,7 @@ namespace WebApplication1.SignalR
         {
             var callerUsername = Context.User.GetUserName();
             var recipientUsername = Context.User.GetUserName();
-            var groupname = GetGroupName(callerUsername, recipientUsername);
+            var groupname = GetGroupName(callerUsername, otherUsername);
             var group = await _messageRepository.GetMessageGroup(groupname);
             var connections = group.Connections;
             var otherConnection = await PresenceTracker.GetConnectionForUsers(otherUsername);
