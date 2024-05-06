@@ -169,7 +169,7 @@ namespace WebApplication1.SignalR
 
             else
             {
-                await Clients.Caller.SendAsync("UserOffline", "Please try again when user is online");
+                await Clients.Caller.SendAsync("UserOffline");
             }
 
         }
